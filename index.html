@@ -67,7 +67,8 @@
 
         function App() {
             // State for options
-            const [selectedOptions, setSelectedOptions] = useState(['price']); 
+            // 修改: 預設值為空陣列，即不預選任何項目
+            const [selectedOptions, setSelectedOptions] = useState([]); 
             const [customText, setCustomText] = useState('');
             const [drinkText, setDrinkText] = useState("溫度選項: 熱飲/正常冰/少冰/微冰/去冰\n甜度 : 正常糖/少糖/半糖/微糖/無糖");
             const [photoSameText, setPhotoSameText] = useState("#照片同 ");
