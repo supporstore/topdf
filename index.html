@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- 引入 jsPDF 用於產生 PDF -->
-    <script src="https://cdnjs.cloudflare.com/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
@@ -176,8 +176,17 @@
             };
 
             const generatePDF = async (imageList, bodyText) => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
+                // 更穩定的 jsPDF 存取方式
+                let jsPDFLib;
+                if (window.jspdf && window.jspdf.jsPDF) {
+                    jsPDFLib = window.jspdf.jsPDF;
+                } else if (window.jsPDF) {
+                    jsPDFLib = window.jsPDF;
+                } else {
+                    throw new Error('PDF 函式庫 (jsPDF) 載入失敗，請確認網路連線。');
+                }
+
+                const doc = new jsPDFLib({
                     orientation: orientation,
                     unit: 'mm',
                     format: 'a4'
@@ -214,7 +223,6 @@
                     const imgProps = doc.getImageProperties(img);
                     const imgRatio = imgProps.width / imgProps.height;
 
-                    // 檢查剩餘高度，如果太少就直接換頁
                     let availableHeight = pageHeight - cursorY - margin;
                     if (availableHeight < 30) {
                         doc.addPage();
@@ -222,22 +230,17 @@
                         availableHeight = pageHeight - cursorY - margin;
                     }
 
-                    // 計算預設尺寸 (全寬)
                     let displayWidth = pageWidth - (margin * 2);
                     let displayHeight = displayWidth / imgRatio;
 
-                    // 如果高度會超過剩餘空間，則以高度為基準縮小圖片
                     if (displayHeight > availableHeight) {
                         displayHeight = availableHeight;
                         displayWidth = displayHeight * imgRatio;
                     }
 
-                    // 計算 X 座標以實現水平置中
                     const xPos = margin + (pageWidth - margin * 2 - displayWidth) / 2;
-
                     doc.addImage(img, 'JPEG', xPos, cursorY, displayWidth, displayHeight);
-                    
-                    cursorY += displayHeight + 5; // 增加圖片間距
+                    cursorY += displayHeight + 5; 
                 }
                 return doc;
             };
@@ -280,9 +283,7 @@
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Left: Inputs */}
                         <div className="space-y-6">
-                            {/* Page Settings */}
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
                                     <Icons.Layout size={18} className="text-blue-500"/> 頁面設定 (方向)
@@ -303,7 +304,6 @@
                                 </div>
                             </div>
 
-                             {/* Option Selection */}
                              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
                                     <Icons.List size={18} className="text-orange-500"/> 選擇 PDF 內文 (可多選)
@@ -378,7 +378,6 @@
                             )}
                         </div>
 
-                        {/* Right: Image Upload & Preview */}
                         <div className="space-y-6">
                             <div 
                                 className={`border-2 border-dashed rounded-lg p-8 text-center transition relative ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'}`}
