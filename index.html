@@ -57,6 +57,8 @@
             List: (props) => <Icon {...props}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></Icon>,
             ArrowLeft: (props) => <Icon {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Icon>,
             ArrowRight: (props) => <Icon {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></Icon>,
+            Settings: (props) => <Icon {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>,
+            Layout: (props) => <Icon {...props}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></Icon>,
         };
 
         // Font URLs to try in order (TTF format required for jsPDF)
@@ -73,6 +75,9 @@
             const [photoSameText, setPhotoSameText] = useState("#照片同 ");
             const [menuSameText, setMenuSameText] = useState("#菜單同 ");
             
+            // PDF Settings
+            const [orientation, setOrientation] = useState('p'); // 'p' for portrait, 'l' for landscape
+
             const [images, setImages] = useState([]);
             const [status, setStatus] = useState({ type: '', msg: '' });
             const [isProcessing, setIsProcessing] = useState(false);
@@ -128,7 +133,6 @@
             const handleDragLeave = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // 只有當離開主要容器時才取消拖曳狀態 (避免進入子元素時觸發)
                 if (e.currentTarget.contains(e.relatedTarget)) return;
                 setIsDragging(false);
             };
@@ -148,10 +152,8 @@
             const moveImage = (index, direction) => {
                 const newImages = [...images];
                 if (direction === -1 && index > 0) {
-                    // 向前 (交換)
                     [newImages[index], newImages[index - 1]] = [newImages[index - 1], newImages[index]];
                 } else if (direction === 1 && index < newImages.length - 1) {
-                    // 向後 (交換)
                     [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
                 }
                 setImages(newImages);
@@ -230,7 +232,12 @@
 
             const generatePDF = async (imageList, bodyText) => {
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+                // 初始化 PDF，傳入選擇的方向
+                const doc = new jsPDF({
+                    orientation: orientation,
+                    unit: 'mm',
+                    format: 'a4'
+                });
 
                 const fontLoaded = await loadChineseFont(doc);
                 
@@ -343,7 +350,6 @@
                                 </p>
                             </div>
                         </div>
-                        {/* Download Button moved to Header */}
                         <button 
                             onClick={handleDownload}
                             disabled={isProcessing}
@@ -360,6 +366,29 @@
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Left: Inputs */}
                         <div className="space-y-6">
+                            {/* 0. Page Settings */}
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                                    <Icons.Layout size={18} className="text-blue-500"/> 頁面設定 (方向)
+                                </label>
+                                <div className="flex gap-4">
+                                    <button 
+                                        onClick={() => setOrientation('p')}
+                                        className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-lg transition font-medium ${orientation === 'p' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                                    >
+                                        <div className="w-4 h-6 border-2 border-current rounded-sm"></div>
+                                        直印
+                                    </button>
+                                    <button 
+                                        onClick={() => setOrientation('l')}
+                                        className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-lg transition font-medium ${orientation === 'l' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                                    >
+                                        <div className="w-6 h-4 border-2 border-current rounded-sm"></div>
+                                        橫印
+                                    </button>
+                                </div>
+                            </div>
+
                              {/* 1. Option Selection */}
                              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
@@ -370,7 +399,6 @@
                                     <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${selectedOptions.includes('price') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <input 
                                             type="checkbox" 
-                                            value="price" 
                                             checked={selectedOptions.includes('price')}
                                             onChange={() => toggleOption('price')}
                                             className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -381,7 +409,6 @@
                                     <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${selectedOptions.includes('fixed') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <input 
                                             type="checkbox" 
-                                            value="fixed" 
                                             checked={selectedOptions.includes('fixed')}
                                             onChange={() => toggleOption('fixed')}
                                             className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -389,12 +416,10 @@
                                         <span className="text-gray-800 font-medium">甜度冰塊都固定</span>
                                     </label>
 
-                                    {/* 溫度/甜度選項 */}
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('drink_custom') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input 
                                                 type="checkbox" 
-                                                value="drink_custom" 
                                                 checked={selectedOptions.includes('drink_custom')}
                                                 onChange={() => toggleOption('drink_custom')}
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -414,12 +439,10 @@
                                         )}
                                     </div>
 
-                                    {/* #照片同 */}
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('photo_same') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input 
                                                 type="checkbox" 
-                                                value="photo_same" 
                                                 checked={selectedOptions.includes('photo_same')}
                                                 onChange={() => toggleOption('photo_same')}
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -439,12 +462,10 @@
                                         )}
                                     </div>
 
-                                    {/* #菜單同 */}
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('menu_same') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input 
                                                 type="checkbox" 
-                                                value="menu_same" 
                                                 checked={selectedOptions.includes('menu_same')}
                                                 onChange={() => toggleOption('menu_same')}
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -464,12 +485,10 @@
                                         )}
                                     </div>
 
-                                    {/* 其他 */}
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('other') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input 
                                                 type="checkbox" 
-                                                value="other" 
                                                 checked={selectedOptions.includes('other')}
                                                 onChange={() => toggleOption('other')}
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -509,7 +528,6 @@
 
                         {/* Right: Image Upload & Preview */}
                         <div className="space-y-6">
-                            {/* 2. Image Upload */}
                             <div 
                                 className={`border-2 border-dashed rounded-lg p-8 text-center transition relative ${
                                     isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
@@ -531,7 +549,6 @@
                                 </div>
                             </div>
 
-                            {/* Preview details */}
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
                                 <h2 className="font-bold text-gray-700 mb-4 flex justify-between items-center">
                                     <span>內容預覽</span>
@@ -550,10 +567,7 @@
                                         {images.map((img, idx) => (
                                             <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-200">
                                                 <img src={img.url} alt={`Preview ${idx}`} className="w-full h-32 object-cover" />
-                                                
-                                                {/* Image Controls Overlay */}
                                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition flex flex-col justify-between p-1 opacity-0 group-hover:opacity-100">
-                                                    {/* Top Right: Delete */}
                                                     <div className="flex justify-end">
                                                         <button 
                                                             onClick={() => removeImage(idx)}
@@ -564,7 +578,6 @@
                                                         </button>
                                                     </div>
                                                     
-                                                    {/* Bottom: Move Controls */}
                                                     <div className="flex justify-between items-center bg-black/50 rounded-lg p-1 backdrop-blur-sm">
                                                         <button 
                                                             onClick={() => moveImage(idx, -1)}
@@ -594,6 +607,7 @@
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">PDF 內容摘要</h4>
                                     <div className="text-sm text-gray-600 space-y-1">
                                         <p className="flex justify-between"><span>PDF 標題:</span> <span className="font-medium text-gray-400">無 (隨機檔名)</span></p>
+                                        <p className="flex justify-between"><span>頁面方向:</span> <span className="font-medium text-blue-600">{orientation === 'p' ? '直印' : '橫印'}</span></p>
                                         <div className="flex justify-between items-start">
                                             <span className="whitespace-nowrap mr-2">內文內容:</span> 
                                             <div className="font-medium text-blue-600 text-right text-xs whitespace-pre-wrap">
