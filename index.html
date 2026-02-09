@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- 引入 jsPDF 用於產生 PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
@@ -57,36 +57,29 @@
             List: (props) => <Icon {...props}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></Icon>,
             ArrowLeft: (props) => <Icon {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Icon>,
             ArrowRight: (props) => <Icon {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></Icon>,
-            Settings: (props) => <Icon {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>,
             Layout: (props) => <Icon {...props}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></Icon>,
         };
 
-        // Font URLs to try in order (TTF format required for jsPDF)
         const FONT_URLS = [
             'https://cdn.jsdelivr.net/gh/justfont/open-huninn-font@master/font/jf-openhuninn-1.1.ttf',
             'https://cdn.jsdelivr.net/npm/open-huninn-font@1.1.0/font/jf-openhuninn-1.1.ttf'
         ];
 
         function App() {
-            // State for options
             const [selectedOptions, setSelectedOptions] = useState([]); 
             const [customText, setCustomText] = useState('');
             const [drinkText, setDrinkText] = useState("溫度選項: 熱飲/正常冰/少冰/微冰/去冰\n甜度 : 正常糖/少糖/半糖/微糖/無糖");
             const [photoSameText, setPhotoSameText] = useState("#照片同 ");
             const [menuSameText, setMenuSameText] = useState("#菜單同 ");
             
-            // PDF Settings
-            const [orientation, setOrientation] = useState('p'); // 'p' for portrait, 'l' for landscape
+            const [orientation, setOrientation] = useState('p'); 
 
             const [images, setImages] = useState([]);
             const [status, setStatus] = useState({ type: '', msg: '' });
             const [isProcessing, setIsProcessing] = useState(false);
             const [fontBase64, setFontBase64] = useState(null); 
-            
-            // Drag and Drop state
             const [isDragging, setIsDragging] = useState(false);
 
-            // Helper to get the actual text content based on selection
             const getEffectiveText = () => {
                 const parts = [];
                 if (selectedOptions.includes('price')) parts.push('菜單價格都加30%');
@@ -95,18 +88,11 @@
                 if (selectedOptions.includes('photo_same')) parts.push(photoSameText);
                 if (selectedOptions.includes('menu_same')) parts.push(menuSameText);
                 if (selectedOptions.includes('other')) parts.push(customText);
-                
                 return parts.join('\n'); 
             };
 
             const toggleOption = (value) => {
-                setSelectedOptions(prev => {
-                    if (prev.includes(value)) {
-                        return prev.filter(item => item !== value);
-                    } else {
-                        return [...prev, value];
-                    }
-                });
+                setSelectedOptions(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
             };
 
             const handleFiles = (files) => {
@@ -119,36 +105,12 @@
                 }
             };
 
-            const handleImageChange = (e) => {
-                handleFiles(e.target.files);
-            };
-
-            // --- Drag and Drop Handlers ---
-            const handleDragOver = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(true);
-            };
-
-            const handleDragLeave = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (e.currentTarget.contains(e.relatedTarget)) return;
-                setIsDragging(false);
-            };
-
-            const handleDrop = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(false);
-                handleFiles(e.dataTransfer.files);
-            };
-
-            const removeImage = (index) => {
-                setImages((prev) => prev.filter((_, i) => i !== index));
-            };
-
-            // 移動圖片的函式
+            const handleImageChange = (e) => handleFiles(e.target.files);
+            const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+            const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget.contains(e.relatedTarget)) return; setIsDragging(false); };
+            const handleDrop = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); handleFiles(e.dataTransfer.files); };
+            const removeImage = (index) => setImages((prev) => prev.filter((_, i) => i !== index));
+            
             const moveImage = (index, direction) => {
                 const newImages = [...images];
                 if (direction === -1 && index > 0) {
@@ -159,18 +121,13 @@
                 setImages(newImages);
             };
 
-            // Helper function to download font
             const downloadFont = async (url) => {
                 const response = await fetch(url, { mode: 'cors' });
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const blob = await response.blob();
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onloadend = () => {
-                        const result = reader.result;
-                        const base64data = result.split(',')[1];
-                        resolve(base64data);
-                    };
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
                     reader.onerror = reject;
                     reader.readAsDataURL(blob);
                 });
@@ -183,9 +140,7 @@
                     doc.setFont('jf-openhuninn');
                     return true;
                 }
-
                 setStatus({ type: 'info', msg: '正在下載中文字型檔 (約 6MB)，初次使用請稍候...' });
-                
                 for (const url of FONT_URLS) {
                     try {
                         const base64data = await downloadFont(url);
@@ -194,45 +149,34 @@
                         doc.addFont('jf-openhuninn.ttf', 'jf-openhuninn', 'normal');
                         doc.setFont('jf-openhuninn');
                         return true; 
-                    } catch (err) {
-                        console.warn(`字型下載失敗 (${url}):`, err);
-                    }
+                    } catch (err) { console.warn(`字型下載失敗 (${url}):`, err); }
                 }
-
                 setStatus({ type: 'warning', msg: '中文字型下載失敗，將使用預設字型 (中文可能無法顯示)。' });
                 return false;
             };
 
             const handleDownload = async () => {
                 const finalText = getEffectiveText();
-
                 if (images.length === 0 && !finalText.trim()) {
                     setStatus({ type: 'error', msg: '請至少選擇一個選項或上傳一張圖片' });
                     return;
                 }
-                
                 setIsProcessing(true);
-                
                 try {
                     const now = new Date();
                     const timestamp = now.toISOString().replace(/[-:T.]/g, '').slice(0, 14);
                     const randomFileName = `PDF_${timestamp}`;
-
                     const doc = await generatePDF(images, finalText);
                     doc.save(`${randomFileName}.pdf`);
-
                     setStatus({ type: 'success', msg: `成功！檔案 "${randomFileName}.pdf" 已開始下載。` });
                 } catch (error) {
                     console.error(error);
                     setStatus({ type: 'error', msg: `發生錯誤: ${error.message || '未知錯誤'}` });
-                } finally {
-                    setIsProcessing(false);
-                }
+                } finally { setIsProcessing(false); }
             };
 
             const generatePDF = async (imageList, bodyText) => {
                 const { jsPDF } = window.jspdf;
-                // 初始化 PDF，傳入選擇的方向
                 const doc = new jsPDF({
                     orientation: orientation,
                     unit: 'mm',
@@ -240,7 +184,6 @@
                 });
 
                 const fontLoaded = await loadChineseFont(doc);
-                
                 const pageWidth = doc.internal.pageSize.getWidth();
                 const pageHeight = doc.internal.pageSize.getHeight();
                 const margin = 10; 
@@ -249,14 +192,9 @@
                 if (bodyText && bodyText.trim()) {
                     const maxContentWidth = pageWidth - (margin * 2);
                     doc.setTextColor(51, 51, 51); 
-
-                    if (!fontLoaded) {
-                        doc.setFont("helvetica"); 
-                    }
-
+                    if (!fontLoaded) doc.setFont("helvetica");
                     const targetFontSize = 20;
                     doc.setFontSize(targetFontSize);
-                    
                     const wrappedLines = doc.splitTextToSize(bodyText, maxContentWidth);
                     const lineHeight = targetFontSize * 0.3528 * 1.3; 
 
@@ -273,55 +211,34 @@
                 for (let i = 0; i < imageList.length; i++) {
                     const imgUrl = imageList[i].url;
                     const img = await loadImage(imgUrl);
-                    
                     const imgProps = doc.getImageProperties(img);
                     const imgRatio = imgProps.width / imgProps.height;
-                    const availableWidth = pageWidth - (margin * 2);
-                    const imgHeightInPdf = availableWidth / imgRatio;
-                    
-                    let currentImgY = 0;
-                    let remainingImgHeight = imgHeightInPdf;
 
-                    while (remainingImgHeight > 0) {
-                        const availableHeightOnPage = pageHeight - cursorY - margin;
-                        
-                        if (availableHeightOnPage < 10 && remainingImgHeight > 10) {
-                             doc.addPage();
-                             cursorY = margin;
-                             continue;
-                        }
-
-                        const drawHeight = Math.min(remainingImgHeight, availableHeightOnPage);
-                        
-                        const sourceW = img.width;
-                        const sourceH = img.height;
-                        const sourceY = currentImgY * (sourceH / imgHeightInPdf);
-                        const sourceSliceH = drawHeight * (sourceH / imgHeightInPdf);
-                        
-                        const canvas = document.createElement('canvas');
-                        canvas.width = sourceW;
-                        canvas.height = sourceSliceH;
-                        const ctx = canvas.getContext('2d');
-                        
-                        ctx.drawImage(img, 0, sourceY, sourceW, sourceSliceH, 0, 0, sourceW, sourceSliceH);
-                        
-                        const slicedImgData = canvas.toDataURL('image/jpeg', 0.95);
-                        
-                        doc.addImage(slicedImgData, 'JPEG', margin, cursorY, availableWidth, drawHeight);
-                        
-                        cursorY += drawHeight;
-                        currentImgY += drawHeight;
-                        remainingImgHeight -= drawHeight;
-                        
-                        if (remainingImgHeight > 0.1) {
-                            doc.addPage();
-                            cursorY = margin;
-                        } else {
-                            cursorY += 5; 
-                        }
+                    // 檢查剩餘高度，如果太少就直接換頁
+                    let availableHeight = pageHeight - cursorY - margin;
+                    if (availableHeight < 30) {
+                        doc.addPage();
+                        cursorY = margin;
+                        availableHeight = pageHeight - cursorY - margin;
                     }
+
+                    // 計算預設尺寸 (全寬)
+                    let displayWidth = pageWidth - (margin * 2);
+                    let displayHeight = displayWidth / imgRatio;
+
+                    // 如果高度會超過剩餘空間，則以高度為基準縮小圖片
+                    if (displayHeight > availableHeight) {
+                        displayHeight = availableHeight;
+                        displayWidth = displayHeight * imgRatio;
+                    }
+
+                    // 計算 X 座標以實現水平置中
+                    const xPos = margin + (pageWidth - margin * 2 - displayWidth) / 2;
+
+                    doc.addImage(img, 'JPEG', xPos, cursorY, displayWidth, displayHeight);
+                    
+                    cursorY += displayHeight + 5; // 增加圖片間距
                 }
-                
                 return doc;
             };
 
@@ -362,11 +279,10 @@
                         </button>
                     </div>
 
-                    {/* Main Content */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Left: Inputs */}
                         <div className="space-y-6">
-                            {/* 0. Page Settings */}
+                            {/* Page Settings */}
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
                                     <Icons.Layout size={18} className="text-blue-500"/> 頁面設定 (方向)
@@ -376,142 +292,78 @@
                                         onClick={() => setOrientation('p')}
                                         className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-lg transition font-medium ${orientation === 'p' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
                                     >
-                                        <div className="w-4 h-6 border-2 border-current rounded-sm"></div>
-                                        直印
+                                        <div className="w-4 h-6 border-2 border-current rounded-sm"></div> 直印
                                     </button>
                                     <button 
                                         onClick={() => setOrientation('l')}
                                         className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-lg transition font-medium ${orientation === 'l' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
                                     >
-                                        <div className="w-6 h-4 border-2 border-current rounded-sm"></div>
-                                        橫印
+                                        <div className="w-6 h-4 border-2 border-current rounded-sm"></div> 橫印
                                     </button>
                                 </div>
                             </div>
 
-                             {/* 1. Option Selection */}
+                             {/* Option Selection */}
                              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
                                     <Icons.List size={18} className="text-orange-500"/> 選擇 PDF 內文 (可多選)
                                 </label>
-                                
                                 <div className="space-y-3">
                                     <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${selectedOptions.includes('price') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedOptions.includes('price')}
-                                            onChange={() => toggleOption('price')}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                        />
+                                        <input type="checkbox" checked={selectedOptions.includes('price')} onChange={() => toggleOption('price')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
                                         <span className="text-gray-800 font-medium">菜單價格都加30%</span>
                                     </label>
-
                                     <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${selectedOptions.includes('fixed') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedOptions.includes('fixed')}
-                                            onChange={() => toggleOption('fixed')}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                        />
+                                        <input type="checkbox" checked={selectedOptions.includes('fixed')} onChange={() => toggleOption('fixed')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
                                         <span className="text-gray-800 font-medium">甜度冰塊都固定</span>
                                     </label>
-
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('drink_custom') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedOptions.includes('drink_custom')}
-                                                onChange={() => toggleOption('drink_custom')}
-                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                            />
+                                            <input type="checkbox" checked={selectedOptions.includes('drink_custom')} onChange={() => toggleOption('drink_custom')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
                                             <span className="text-gray-800 font-medium">溫度/甜度選項 (可修改)</span>
                                         </label>
-                                        
                                         {selectedOptions.includes('drink_custom') && (
                                             <div className="px-3 pb-3 pl-11">
-                                                <textarea 
-                                                    value={drinkText}
-                                                    onChange={(e) => setDrinkText(e.target.value)}
-                                                    rows="3"
-                                                    className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
-                                                />
+                                                <textarea value={drinkText} onChange={(e) => setDrinkText(e.target.value)} rows="3" className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white" />
                                             </div>
                                         )}
                                     </div>
-
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('photo_same') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedOptions.includes('photo_same')}
-                                                onChange={() => toggleOption('photo_same')}
-                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                            />
+                                            <input type="checkbox" checked={selectedOptions.includes('photo_same')} onChange={() => toggleOption('photo_same')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
                                             <span className="text-gray-800 font-medium">#照片同</span>
                                         </label>
-                                        
                                         {selectedOptions.includes('photo_same') && (
                                             <div className="px-3 pb-3 pl-11">
-                                                <input 
-                                                    type="text"
-                                                    value={photoSameText}
-                                                    onChange={(e) => setPhotoSameText(e.target.value)}
-                                                    className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
-                                                />
+                                                <input type="text" value={photoSameText} onChange={(e) => setPhotoSameText(e.target.value)} className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white" />
                                             </div>
                                         )}
                                     </div>
-
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('menu_same') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedOptions.includes('menu_same')}
-                                                onChange={() => toggleOption('menu_same')}
-                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                            />
+                                            <input type="checkbox" checked={selectedOptions.includes('menu_same')} onChange={() => toggleOption('menu_same')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
                                             <span className="text-gray-800 font-medium">#菜單同</span>
                                         </label>
-                                        
                                         {selectedOptions.includes('menu_same') && (
                                             <div className="px-3 pb-3 pl-11">
-                                                <input 
-                                                    type="text"
-                                                    value={menuSameText}
-                                                    onChange={(e) => setMenuSameText(e.target.value)}
-                                                    className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
-                                                />
+                                                <input type="text" value={menuSameText} onChange={(e) => setMenuSameText(e.target.value)} className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white" />
                                             </div>
                                         )}
                                     </div>
-
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('other') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedOptions.includes('other')}
-                                                onChange={() => toggleOption('other')}
-                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                            />
+                                            <input type="checkbox" checked={selectedOptions.includes('other')} onChange={() => toggleOption('other')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
                                             <span className="text-gray-800 font-medium">或是其他 (自訂文字)</span>
                                         </label>
-                                        
                                         {selectedOptions.includes('other') && (
                                             <div className="px-3 pb-3 pl-11">
-                                                <textarea 
-                                                    value={customText}
-                                                    onChange={(e) => setCustomText(e.target.value)}
-                                                    placeholder="請輸入文字..."
-                                                    rows="3"
-                                                    className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
-                                                />
+                                                <textarea value={customText} onChange={(e) => setCustomText(e.target.value)} placeholder="請輸入文字..." rows="3" className="w-full text-base p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white" />
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Status Message */}
                             {status.msg && (
                                 <div className={`p-4 rounded-lg flex items-center gap-3 ${
                                     status.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' :
@@ -529,38 +381,23 @@
                         {/* Right: Image Upload & Preview */}
                         <div className="space-y-6">
                             <div 
-                                className={`border-2 border-dashed rounded-lg p-8 text-center transition relative ${
-                                    isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
-                                }`}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
+                                className={`border-2 border-dashed rounded-lg p-8 text-center transition relative ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'}`}
+                                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                             >
-                                <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    multiple
-                                    onChange={handleImageChange}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                />
+                                <input type="file" accept="image/*" multiple onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                 <div className="flex flex-col items-center gap-2 text-gray-400 pointer-events-none">
-                                    <Icons.Upload size={32} />
-                                    <span className="text-sm">點擊或拖曳圖片至此</span>
+                                    <Icons.Upload size={32} /> <span className="text-sm">點擊或拖曳圖片至此</span>
                                 </div>
                             </div>
 
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
                                 <h2 className="font-bold text-gray-700 mb-4 flex justify-between items-center">
                                     <span>內容預覽</span>
-                                    {images.length > 0 && (
-                                        <button onClick={() => setImages([])} className="text-xs text-red-500 hover:text-red-700">清除圖片</button>
-                                    )}
+                                    {images.length > 0 && <button onClick={() => setImages([])} className="text-xs text-red-500 hover:text-red-700">清除圖片</button>}
                                 </h2>
-                                
                                 {images.length === 0 ? (
                                     <div className="h-64 flex flex-col justify-center items-center text-gray-300 bg-gray-50 rounded-lg border border-gray-100 mb-6">
-                                        <Icons.ImageIcon size={48} className="mb-2 opacity-50"/>
-                                        <p className="text-sm">尚未選擇圖片</p>
+                                        <Icons.ImageIcon size={48} className="mb-2 opacity-50"/> <p className="text-sm">尚未選擇圖片</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar mb-6">
@@ -569,40 +406,18 @@
                                                 <img src={img.url} alt={`Preview ${idx}`} className="w-full h-32 object-cover" />
                                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition flex flex-col justify-between p-1 opacity-0 group-hover:opacity-100">
                                                     <div className="flex justify-end">
-                                                        <button 
-                                                            onClick={() => removeImage(idx)}
-                                                            className="p-1 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition"
-                                                            title="移除"
-                                                        >
-                                                            <Icons.Trash2 size={16} />
-                                                        </button>
+                                                        <button onClick={() => removeImage(idx)} className="p-1 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition" title="移除"><Icons.Trash2 size={16} /></button>
                                                     </div>
-                                                    
                                                     <div className="flex justify-between items-center bg-black/50 rounded-lg p-1 backdrop-blur-sm">
-                                                        <button 
-                                                            onClick={() => moveImage(idx, -1)}
-                                                            disabled={idx === 0}
-                                                            className={`p-1 text-white hover:bg-white/20 rounded ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                            title="向前移動"
-                                                        >
-                                                            <Icons.ArrowLeft size={16} />
-                                                        </button>
+                                                        <button onClick={() => moveImage(idx, -1)} disabled={idx === 0} className={`p-1 text-white hover:bg-white/20 rounded ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}`} title="向前移動"><Icons.ArrowLeft size={16} /></button>
                                                         <span className="text-white text-xs font-mono">{idx + 1}</span>
-                                                        <button 
-                                                            onClick={() => moveImage(idx, 1)}
-                                                            disabled={idx === images.length - 1}
-                                                            className={`p-1 text-white hover:bg-white/20 rounded ${idx === images.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                            title="向後移動"
-                                                        >
-                                                            <Icons.ArrowRight size={16} />
-                                                        </button>
+                                                        <button onClick={() => moveImage(idx, 1)} disabled={idx === images.length - 1} className={`p-1 text-white hover:bg-white/20 rounded ${idx === images.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`} title="向後移動"><Icons.ArrowRight size={16} /></button>
                                                     </div>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
-                                
                                 <div className="pt-4 border-t border-gray-100">
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">PDF 內容摘要</h4>
                                     <div className="text-sm text-gray-600 space-y-1">
@@ -610,9 +425,7 @@
                                         <p className="flex justify-between"><span>頁面方向:</span> <span className="font-medium text-blue-600">{orientation === 'p' ? '直印' : '橫印'}</span></p>
                                         <div className="flex justify-between items-start">
                                             <span className="whitespace-nowrap mr-2">內文內容:</span> 
-                                            <div className="font-medium text-blue-600 text-right text-xs whitespace-pre-wrap">
-                                                {getEffectiveText() || '無'}
-                                            </div>
+                                            <div className="font-medium text-blue-600 text-right text-xs whitespace-pre-wrap">{getEffectiveText() || '無'}</div>
                                         </div>
                                         <p className="flex justify-between mt-1"><span>圖片數量:</span> <span>{images.length} 張</span></p>
                                     </div>
