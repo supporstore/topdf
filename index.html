@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>圖片/文字轉 PDF 工具 (可編輯版)</title>
     
+    <!-- 網站圖示 (Favicon) - 用於書籤與分頁標籤 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+    <!-- Apple Touch Icon - 用於手機「加到主畫面」 -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/337/337946.png">
+
     <!-- 引入 React 和 ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -58,6 +63,13 @@
             ArrowLeft: (props) => <Icon {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Icon>,
             ArrowRight: (props) => <Icon {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></Icon>,
             Layout: (props) => <Icon {...props}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></Icon>,
+            DollarSign: (props) => <Icon {...props}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></Icon>,
+            Lock: (props) => <Icon {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>,
+            Coffee: (props) => <Icon {...props}><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></Icon>,
+            Camera: (props) => <Icon {...props}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></Icon>,
+            ClipboardList: (props) => <Icon {...props}><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></Icon>,
+            Type: (props) => <Icon {...props}><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></Icon>,
+            Info: (props) => <Icon {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></Icon>
         };
 
         const FONT_URLS = [
@@ -176,7 +188,6 @@
             };
 
             const generatePDF = async (imageList, bodyText) => {
-                // 更穩定的 jsPDF 存取方式
                 let jsPDFLib;
                 if (window.jspdf && window.jspdf.jsPDF) {
                     jsPDFLib = window.jspdf.jsPDF;
@@ -311,15 +322,18 @@
                                 <div className="space-y-3">
                                     <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${selectedOptions.includes('price') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <input type="checkbox" checked={selectedOptions.includes('price')} onChange={() => toggleOption('price')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                                        <Icons.DollarSign size={18} className="text-green-600" />
                                         <span className="text-gray-800 font-medium">菜單價格都加30%</span>
                                     </label>
                                     <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${selectedOptions.includes('fixed') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <input type="checkbox" checked={selectedOptions.includes('fixed')} onChange={() => toggleOption('fixed')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                                        <Icons.Lock size={18} className="text-gray-600" />
                                         <span className="text-gray-800 font-medium">甜度冰塊都固定</span>
                                     </label>
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('drink_custom') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input type="checkbox" checked={selectedOptions.includes('drink_custom')} onChange={() => toggleOption('drink_custom')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                                            <Icons.Coffee size={18} className="text-amber-700" />
                                             <span className="text-gray-800 font-medium">溫度/甜度選項 (可修改)</span>
                                         </label>
                                         {selectedOptions.includes('drink_custom') && (
@@ -331,6 +345,7 @@
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('photo_same') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input type="checkbox" checked={selectedOptions.includes('photo_same')} onChange={() => toggleOption('photo_same')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                                            <Icons.Camera size={18} className="text-blue-500" />
                                             <span className="text-gray-800 font-medium">#照片同</span>
                                         </label>
                                         {selectedOptions.includes('photo_same') && (
@@ -342,6 +357,7 @@
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('menu_same') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input type="checkbox" checked={selectedOptions.includes('menu_same')} onChange={() => toggleOption('menu_same')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                                            <Icons.ClipboardList size={18} className="text-indigo-500" />
                                             <span className="text-gray-800 font-medium">#菜單同</span>
                                         </label>
                                         {selectedOptions.includes('menu_same') && (
@@ -353,6 +369,7 @@
                                     <div className={`border rounded-lg transition ${selectedOptions.includes('other') ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}`}>
                                         <label className="flex items-center gap-3 p-3 cursor-pointer">
                                             <input type="checkbox" checked={selectedOptions.includes('other')} onChange={() => toggleOption('other')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                                            <Icons.Type size={18} className="text-gray-700" />
                                             <span className="text-gray-800 font-medium">或是其他 (自訂文字)</span>
                                         </label>
                                         {selectedOptions.includes('other') && (
@@ -391,8 +408,8 @@
 
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
                                 <h2 className="font-bold text-gray-700 mb-4 flex justify-between items-center">
-                                    <span>內容預覽</span>
-                                    {images.length > 0 && <button onClick={() => setImages([])} className="text-xs text-red-500 hover:text-red-700">清除圖片</button>}
+                                    <span className="flex items-center gap-2"><Icons.ImageIcon size={18} className="text-blue-500"/> 內容預覽</span>
+                                    {images.length > 0 && <button onClick={() => setImages([])} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"><Icons.Trash2 size={14}/>清除圖片</button>}
                                 </h2>
                                 {images.length === 0 ? (
                                     <div className="h-64 flex flex-col justify-center items-center text-gray-300 bg-gray-50 rounded-lg border border-gray-100 mb-6">
@@ -418,7 +435,7 @@
                                     </div>
                                 )}
                                 <div className="pt-4 border-t border-gray-100">
-                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">PDF 內容摘要</h4>
+                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1"><Icons.Info size={14}/> PDF 內容摘要</h4>
                                     <div className="text-sm text-gray-600 space-y-1">
                                         <p className="flex justify-between"><span>PDF 標題:</span> <span className="font-medium text-gray-400">無 (隨機檔名)</span></p>
                                         <p className="flex justify-between"><span>頁面方向:</span> <span className="font-medium text-blue-600">{orientation === 'p' ? '直印' : '橫印'}</span></p>
