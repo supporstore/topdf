@@ -241,12 +241,34 @@
                         availableHeight = pageHeight - cursorY - margin;
                     }
 
-                    let displayWidth = pageWidth - (margin * 2);
-                    let displayHeight = displayWidth / imgRatio;
+                    const fullWidth = pageWidth - (margin * 2);
+                    const fullHeight = fullWidth / imgRatio;
+
+                    let displayWidth = fullWidth;
+                    let displayHeight = fullHeight;
 
                     if (displayHeight > availableHeight) {
-                        displayHeight = availableHeight;
-                        displayWidth = displayHeight * imgRatio;
+                        const constrainedWidth = availableHeight * imgRatio;
+                        
+                        // 判斷邏輯：如果因為高度受限，被迫縮小寬度至小於滿版寬度的 90% (即縮小了 10% 以上)
+                        // 且此時並非在頁面頂端 (cursorY > margin)，則自動換至下一頁
+                        if (constrainedWidth < 0.9 * fullWidth && cursorY > margin) {
+                            doc.addPage();
+                            cursorY = margin;
+                            availableHeight = pageHeight - cursorY - margin;
+
+                            // 在新的一頁重新嘗試使用滿版或最大合適大小繪製
+                            displayWidth = fullWidth;
+                            displayHeight = fullHeight;
+                            if (displayHeight > availableHeight) {
+                                displayHeight = availableHeight;
+                                displayWidth = displayHeight * imgRatio;
+                            }
+                        } else {
+                            // 否則，直接在當前頁面使用被迫縮小後的尺寸
+                            displayHeight = availableHeight;
+                            displayWidth = constrainedWidth;
+                        }
                     }
 
                     const xPos = margin + (pageWidth - margin * 2 - displayWidth) / 2;
